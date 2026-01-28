@@ -8,7 +8,6 @@ app.use(express.json());
 const JWT_SECRET = "mysecretpassword";
 const saltrounds = 10;
 
-
 // Register a user
 app.post("/auth/signup", async (req, res) => {
     const email = req.body.email;
@@ -41,29 +40,20 @@ app.post("/auth/login", async (req, res) => {
     });
 
     if (!user) {
-        return res.status(401).json({
-            error: "Invalid credentials"
-        });
+        return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const passwordCheck = await bcrypt.compare(password, user.password);
+    const passwordCheck = await bcrypt.compare(password, (user).password);
     if (!passwordCheck) {
-        return res.status(401).json({
-            error: "Invalid credentials"
-        });
+        return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const token = jwt.sign(
-        {
-            userId: user.id,
-            role: user.role
-        },
+        { userId: (user).id, role: user.role },
         JWT_SECRET
     );
 
-    res.json({
-        token
-    });
+    res.json({ token });
 });
 
 // Only INSTRUCTOR can create courses
@@ -76,10 +66,10 @@ app.post("/courses", async (req, res) => {
         data: {
             title,
             description,
-            price
+            price: Number(price),
+            instructorId: (req as any).userId
         }
     });
-
     res.json(course);
 });
 
@@ -99,16 +89,14 @@ app.get("/courses/:id", async (req, res) => {
     res.json(course);
 });
 
-// Only course instructor
+// Only course instructor can update
 app.patch("/courses/:id", async (req, res) => {
     const course = await prisma.course.findUnique({
         where: { id: req.params.id }
     });
 
     if (!course || course.instructorId !== (req as any).userId) {
-        return res.status(403).json({
-            error: "course not found for you!"
-        });
+        return res.status(403).json({ error: "course not found for you!" });
     }
 
     const updated = await prisma.course.update({
@@ -119,62 +107,52 @@ app.patch("/courses/:id", async (req, res) => {
     res.json(updated);
 });
 
-// Only course instructor
+// Only course instructor can delete
 app.delete("/courses/:id", async (req, res) => {
-
     const course = await prisma.course.findUnique({
         where: { id: req.params.id }
     });
 
     if (!course || course.instructorId !== (req as any).userId) {
-        return res.status(401).json({
-            error: "Forbidden"
-        });
+        return res.status(401).json({ error: "Forbidden" });
     }
 
-    await prisma.course.delete({
-        where: { id: req.params.id }
-    });
-    res.json({
-        success: true
-    });
+    await prisma.course.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
 });
 
 //////// LESSONS ////////////
-app.post("/lessons", async (req: any, res) => {
+app.post("/lessons", async (req, res) => {
     const title = req.body.title;
     const content = req.body.content;
     const courseId = req.body.courseId;
 
     if (!title || !content || !courseId) {
-        return res.status(400).json({
-            error: "Missing fields"
-        });
+        return res.status(400).json({ error: "Missing fields" });
     }
-    const course = await prisma.courseId.findUnique({
+
+    const course = await prisma.course.findUnique({  // fixed typo
         where: { id: courseId }
     });
+
     if (!course) {
-        return res.status(404).json({
-            error: "Course not found"
-        });
+        return res.status(404).json({ error: "Course not found" });
     }
-    if (course.instructorId !== req.userId) {
-        return res.status(403).json({
-            error: "Not authorized"
-        });
+
+    if (course.instructorId !== (req as any).userId) {
+        return res.status(403).json({ error: "Not authorized" });
     }
+
     const lesson = await prisma.lesson.create({
-        data: {
-            title,
-            content,
-            courseId
-        }
+        data: { title, content, courseId }
     });
+
     res.status(201).json(lesson);
-})
+});
+
 app.get("/courses/:courseId/lessons", async (req, res) => {
     const courseId = req.params.courseId;
+
     const lessons = await prisma.lesson.findMany({
         where: { courseId },
         orderBy: { createdAt: "asc" }
@@ -183,49 +161,32 @@ app.get("/courses/:courseId/lessons", async (req, res) => {
     res.json(lessons);
 });
 
-
 //////// PURCHASE ////////////
-app.post("/purchases", async (req: any, res) => {
+app.post("/purchases", async (req, res) => {
     const courseId = req.body.courseId;
-    if (!courseId) {
-        return res.status(400).json({
-            error: "CourseId is required"
-        });
+    if (!courseId) return res.status(400).json({ error: "CourseId is required" });
+
+    if ((req as any).role !== "STUDENT") {
+        return res.status(403).json({ error: "Only students can purchase courses" });
     }
 
-    if (req.role !== "STUDENT") {
-        return res.status(403).json({
-            error: "Only students can purchase courses"
-        });
-    }
-
-    const course = await prisma.course.findUnique({
-        where: { id: courseId }
-    });
-
-    if (!course) {
-        return res.status(404).json({
-            error: "Course not found"
-        });
-    }
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) return res.status(404).json({ error: "Course not found" });
 
     const existingPurchase = await prisma.purchase.findFirst({
-        where: {
-            courseId,
-            userId: req.userId
-        }
+        where: { courseId, userId: (req as any).userId }
     });
     if (existingPurchase) {
-        return res.status(400).json({
-            error: "Course already purchased"
-        });
+        return res.status(400).json({ error: "Course already purchased" });
     }
+
     const purchase = await prisma.purchase.create({
-        data: {
-            courseId,
-            userId: req.userId
-        }
+        data: { courseId, userId: (req as any).userId }
     });
 
     res.status(201).json(purchase);
+});
+
+app.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
 });
