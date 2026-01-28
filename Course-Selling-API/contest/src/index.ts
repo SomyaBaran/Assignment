@@ -186,6 +186,28 @@ app.post("/purchases", async (req, res) => {
 
     res.status(201).json(purchase);
 });
+app.get("/courses/:courseId/lessons", async (req, res) => {
+    const courseId = req.params.courseId;
+
+    const course = await prisma.course.findUnique({
+        where: { id: courseId }
+    });
+
+    if (!course) {
+        return res.status(404).json({
+            error: "Course not found"
+        });
+    }
+
+    const lessons = await prisma.lesson.findMany({
+        where: { courseId },
+        orderBy: { createdAt: "asc" }
+    });
+
+    res.json(lessons);
+});
+
+
 
 app.listen(3000, () => {
     console.log("Server running on http://localhost:3000");
