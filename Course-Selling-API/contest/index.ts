@@ -141,7 +141,7 @@ app.delete("/courses/:id", async (req, res) => {
 });
 
 //////// LESSONS ////////////
-app.post("/lessons", async (req, res) => {
+app.post("/lessons", async (req: any, res) => {
     const title = req.body.title;
     const content = req.body.content;
     const courseId = req.body.courseId;
@@ -185,21 +185,7 @@ app.get("/courses/:courseId/lessons", async (req, res) => {
 
 
 //////// PURCHASE ////////////
-//     const existingPurchase = await prisma.purchase.findFirst({
-//         where: { courseId, userId: req.userId },
-//     });
-//     if (existingPurchase) return res.status(400).json({ error: "Course already purchased" });
-
-//     const purchase = await prisma.purchase.create({
-//         data: {
-//             courseId,
-//             userId: req.userId!,
-//         },
-//     });
-
-//     res.status(201).json(purchase);
-// });
-app.post("/purchases", async (req, res) => {
+app.post("/purchases", async (req: any, res) => {
     const courseId = req.body.courseId;
     if (!courseId) {
         return res.status(400).json({
@@ -234,6 +220,12 @@ app.post("/purchases", async (req, res) => {
             error: "Course already purchased"
         });
     }
+    const purchase = await prisma.purchase.create({
+        data: {
+            courseId,
+            userId: req.userId
+        }
+    });
 
-    
-})
+    res.status(201).json(purchase);
+});
