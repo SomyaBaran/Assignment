@@ -139,3 +139,101 @@ app.delete("/courses/:id", async (req, res) => {
         success: true
     });
 });
+
+//////// LESSONS ////////////
+app.post("/lessons", async (req, res) => {
+    const title = req.body.title;
+    const content = req.body.content;
+    const courseId = req.body.courseId;
+
+    if (!title || !content || !courseId) {
+        return res.status(400).json({
+            error: "Missing fields"
+        });
+    }
+    const course = await prisma.courseId.findUnique({
+        where: { id: courseId }
+    });
+    if (!course) {
+        return res.status(404).json({
+            error: "Course not found"
+        });
+    }
+    if (course.instructorId !== req.userId) {
+        return res.status(403).json({
+            error: "Not authorized"
+        });
+    }
+    const lesson = await prisma.lesson.create({
+        data: {
+            title,
+            content,
+            courseId
+        }
+    });
+    res.status(201).json(lesson);
+})
+app.get("/courses/:courseId/lessons", async (req, res) => {
+    const courseId = req.params.courseId;
+    const lessons = await prisma.lesson.findMany({
+        where: { courseId },
+        orderBy: { createdAt: "asc" }
+    });
+
+    res.json(lessons);
+});
+
+
+//////// PURCHASE ////////////
+//     const existingPurchase = await prisma.purchase.findFirst({
+//         where: { courseId, userId: req.userId },
+//     });
+//     if (existingPurchase) return res.status(400).json({ error: "Course already purchased" });
+
+//     const purchase = await prisma.purchase.create({
+//         data: {
+//             courseId,
+//             userId: req.userId!,
+//         },
+//     });
+
+//     res.status(201).json(purchase);
+// });
+app.post("/purchases", async (req, res) => {
+    const courseId = req.body.courseId;
+    if (!courseId) {
+        return res.status(400).json({
+            error: "CourseId is required"
+        });
+    }
+
+    if (req.role !== "STUDENT") {
+        return res.status(403).json({
+            error: "Only students can purchase courses"
+        });
+    }
+
+    const course = await prisma.course.findUnique({
+        where: { id: courseId }
+    });
+
+    if (!course) {
+        return res.status(404).json({
+            error: "Course not found"
+        });
+    }
+
+    const existingPurchase = await prisma.purchase.findFirst({
+        where: {
+            courseId,
+            userId: req.userId
+        }
+    });
+    if (existingPurchase) {
+        return res.status(400).json({
+            error: "Course already purchased"
+        });
+    }
+
+    
+})
