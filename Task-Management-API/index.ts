@@ -30,7 +30,7 @@ app.post("/user", async (req: Request, res: Response) => {
 });
 
 // get users by id
-app.get("/users/:id", async (req: Request, res: Response) => {
+app.get("/users/:id", async (req: Request<{ id: string }>, res: Response) => {
   const user = await prisma.user.findUnique({
     where: {
       id: req.params.id
@@ -82,7 +82,7 @@ app.get("/projects", async (req: Request, res: Response) => {
 });
 
 // Get project with its tasks
-app.get("/projects/:id", async (req: Request, res: Response) => {
+app.get("/projects/:id", async (req: Request<{ id: string }>, res: Response) => {
   const project = await prisma.project.findUnique({
     where: { id: req.params.id },
     include: { tasks: true }
@@ -100,7 +100,7 @@ app.get("/projects/:id", async (req: Request, res: Response) => {
 ///////////// TASKS //////////////
 
 // create tasks
-app.post("/tasks", async (req: Request, res: Response) => {
+app.post("/tasks", async (req: Request<{ id: string }>, res: Response) => {
   try {
     const title: string = req.body.title;
     const description: string | undefined = req.body.description;
@@ -127,11 +127,9 @@ app.post("/tasks", async (req: Request, res: Response) => {
 });
 
 // get task by ID
-app.get("/tasks/:id", async (req: Request, res: Response) => {
+app.get("/tasks/:id", async (req: Request<{ id: string }>, res: Response) => {
   const task = await prisma.task.findUnique({
-    where: {
-      id: req.params.id
-    }
+    where: { id: req.params.id }
   });
 
   if (!task) {
@@ -144,7 +142,7 @@ app.get("/tasks/:id", async (req: Request, res: Response) => {
 });
 
 // update task
-app.patch("/tasks/:id", async (req: Request, res: Response) => {
+app.patch("/tasks/:id", async (req: Request<{ id: string }>, res: Response) => {
   try {
     const task = await prisma.task.update({
       where: { id: req.params.id },
@@ -160,7 +158,7 @@ app.patch("/tasks/:id", async (req: Request, res: Response) => {
 });
 
 // delete task
-app.delete("/tasks/:id", async (req: Request, res: Response) => {
+app.delete("/tasks/:id", async (req: Request<{ id: string }>, res: Response) => {
   try {
     await prisma.task.delete({
       where: { id: req.params.id }
@@ -177,9 +175,7 @@ app.delete("/tasks/:id", async (req: Request, res: Response) => {
 // get tasks by project
 app.get("/projects/:projectId/tasks", async (req: Request, res: Response) => {
   const tasks = await prisma.task.findMany({
-    where: {
-      projectId: req.params.projectId
-    }
+    where: { projectId: req.params.projectId as string }
   });
 
   res.json(tasks);
