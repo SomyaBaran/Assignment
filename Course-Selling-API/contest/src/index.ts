@@ -8,7 +8,7 @@ app.use(express.json());
 const JWT_SECRET = "mysecretpassword";
 const saltrounds = 10;
 
-// Register a user
+
 app.post("/auth/signup", async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
@@ -30,7 +30,7 @@ app.post("/auth/signup", async (req, res) => {
     });
 });
 
-// Login and return JWT
+
 app.post("/auth/login", async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
@@ -55,8 +55,6 @@ app.post("/auth/login", async (req, res) => {
 
     res.json({ token });
 });
-
-// Only INSTRUCTOR can create courses
 app.post("/courses", async (req, res) => {
     const title = req.body.title;
     const description = req.body.description;
@@ -73,13 +71,13 @@ app.post("/courses", async (req, res) => {
     res.json(course);
 });
 
-// Public endpoint
+
 app.get("/courses", async (req, res) => {
     const courses = await prisma.course.findMany();
     res.json(courses);
 });
 
-// Get course with all lessons
+
 app.get("/courses/:id", async (req, res) => {
     const course = await prisma.course.findUnique({
         where: { id: req.params.id },
@@ -89,7 +87,7 @@ app.get("/courses/:id", async (req, res) => {
     res.json(course);
 });
 
-// Only course instructor can update
+
 app.patch("/courses/:id", async (req, res) => {
     const course = await prisma.course.findUnique({
         where: { id: req.params.id }
