@@ -104,5 +104,37 @@ app.post("/courses", async (req, res) => {
     const amount = req.body.amount;
     const adminId = req.body.adminId;
 
+    if (!title || !description || !amount || !adminId) {
+        return res.status(400).json({
+            error: "Missing fields"
+        });
+    }
 
-})
+    try {
+        const course = await prisma.course.create({
+            data: {
+                title,
+                description,
+                amount,
+                adminId
+            }
+        });
+
+        return res.status(201).json({
+            id: course.id,
+            title: course.title
+        });
+    }
+    catch (err) {
+        console.log(err);
+        return res.status(500).json({
+            err: "Server error"
+        });
+    }
+});
+
+
+
+
+
+
