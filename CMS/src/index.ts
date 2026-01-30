@@ -98,4 +98,11 @@ app.post("/auth/signin", async (req, res) => {
     }
 });
 
+app.post("/courses", async (req, res) => {
+    const title = req.body.title;
+    const description = req.body.description;
+    const amount = req.body.amount;
+    const adminId = req.body.adminId;
 
+
+})
