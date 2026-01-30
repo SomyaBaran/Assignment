@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Status {
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  courses       Course[]       @relation("AdminCourses")
+  enrollments   Enrollment[]
+  subscriptions Subscription[]
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  amount      Int
+  adminId     String
+  createdAt   DateTime @default(now())
+
+  admin         User           @relation("AdminCourses", fields: [adminId], references: [id])
+  lectures      Lecture[]
+  enrollments   Enrollment[]
+  subscriptions Subscription[]
+}
+
+model Lecture {
+  id       String @id @default(uuid())
+  title    String
+  videoUrl String
+  order    Int
+  courseId String
+
+  course Course @relation(fields: [courseId], references: [id])
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  userId     String
+  courseId   String
+  enrolledAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  amount    Int
+  status    Status
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+}
