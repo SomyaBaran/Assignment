@@ -276,6 +276,31 @@ app.get("/me/courses", async (req, res) => {
 
 // 9
 
+app.get("/me/subscription", async (req, res) => {
+    try {
+        const subs = await prisma.subscription.findMany({
+            include: {
+                course: true
+            }
+        });
 
+        const result = subs.map((s) => ({
+            courseId: s.course.id,
+            amount: s.amount,
+            status: s.status,
+            createdAt: s.createdAt
+        }));
 
+        return res.status(200).json(result);
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            error: "Server error"
+        });
+    }
+});
 
+app.listen(3000, () => {
+    console.log("Port is listening on 3000");
+});
