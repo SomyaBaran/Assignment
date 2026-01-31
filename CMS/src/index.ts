@@ -11,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const saltrounds = 10;
 
 
-// Signup
+// 1 
 app.post("/auth/signup", async (req, res) => {
     const username = req.body.username;
     const email = req.body.email;
@@ -54,7 +54,7 @@ app.post("/auth/signup", async (req, res) => {
 });
 
 
-// Signin
+// 2
 app.post("/auth/signin", async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
@@ -98,6 +98,7 @@ app.post("/auth/signin", async (req, res) => {
     }
 });
 
+// 3
 app.post("/courses", async (req, res) => {
     const title = req.body.title;
     const description = req.body.description;
@@ -134,7 +135,65 @@ app.post("/courses", async (req, res) => {
 });
 
 
+// 4 
+app.get("/courses", async (req, res) => {
+    try {
+        const courses = await prisma.course.findMany({
+            include: {
+                admin: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
+            }
+        });
+
+        return res.status(200).json(courses);
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            error: "Server error"
+        });
+    }
+});
+
+// 5
+app.post("/courses/:courseId/lectures", async (req, res) => {
+    const courseId = req.params.courseId;
+    const title = req.body.title;
+    const videoUrl = req.body.videoUrl;
+    const order = req.body.order;
+
+    if (!title || !videoUrl || !order) {
+        return res.status(400).json({
+            msg: "Missing fields"
+        });
+    }
 
 
+    try {
+        await prisma.lecture.create({
+            data: {
+                title,
+                videoUrl,
+                order,
+                courseId
+            }
+        });
+        return res.status(201).json({
+            msg: "Course added successfully"
+        });
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            error: "Server error"
+        });
+    }
+});
+
+// 6
 
 
