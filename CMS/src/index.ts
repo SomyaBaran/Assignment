@@ -183,7 +183,7 @@ app.post("/courses/:courseId/lectures", async (req, res) => {
             }
         });
         return res.status(201).json({
-            msg: "Course added successfully"
+            msg: "Lecture added successfully"
         });
     }
     catch (error) {
@@ -208,12 +208,74 @@ app.get("/courses/:courseId/lectures", async (req, res) => {
     catch (error) {
         console.log(error);
         return res.status(500).json({
-            error:"Server error"
+            error: "Server error"
         });
     }
 });
 
 
 // 7 
+
+app.post("/courses/:courseId/purchase", async (req, res) => {
+    const courseId = req.params.courseId;
+    const userId = req.body.userId;
+    const amount = req.body.amount;
+
+    try {
+        await prisma.$transaction(async (prisma) => {
+            await prisma.subscription.create({
+                data: {
+                    userId,
+                    courseId,
+                    amount,
+                    status: "SUCCESS"
+                }
+            });
+
+            await prisma.enrollment.create({
+                data: {
+                    userId,
+                    courseId
+                }
+            });
+        });
+        return res.status(201).json("Course added successfully");
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            error: "Server error or Transaction failed"
+        });
+    }
+});
+
+
+// 8
+
+app.get("/me/courses", async (req, res) => {
+    try {
+        const enrollments = await prisma.enrollment.findMany({
+            include: {
+                course: true
+            }
+        });
+        const result = enrollments.map((e) => ({
+            courseId: e.course.id,
+            title: e.course.title,
+            enrolledAt: e.enrolledAt
+        }));
+        return res.status(200).json(result);
+    }
+    catch (err) {
+        console.log(err);
+        return res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// 9
+
+
 
 
