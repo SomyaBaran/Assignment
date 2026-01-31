@@ -196,4 +196,24 @@ app.post("/courses/:courseId/lectures", async (req, res) => {
 
 // 6
 
+app.get("/courses/:courseId/lectures", async (req, res) => {
+    const courseId = req.params.courseId;
+    try {
+        const lecture = await prisma.lecture.findMany({
+            where: { courseId },
+            orderBy: { order: "asc" }
+        });
+        return res.status(200).json(lecture);
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            error:"Server error"
+        });
+    }
+});
+
+
+// 7 
+
 
